@@ -1,1 +1,923 @@
- 
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>곱셈 챔피언 리그</title>
+  <style>
+    :root {
+      --primary: #ff7a59;
+      --secondary: #ffd166;
+      --accent: #06d6a0;
+      --dark: #073b4c;
+      --light: #f1f5f9;
+    }
+
+    * {
+      box-sizing: border-box;
+      font-family: "Noto Sans KR", "Pretendard", sans-serif;
+    }
+
+    body {
+      margin: 0;
+      background: linear-gradient(180deg, #fff3d9 0%, #f1f5f9 100%);
+      color: var(--dark);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      padding: 24px;
+    }
+
+    .app {
+      width: min(1100px, 100%);
+      background: white;
+      border-radius: 24px;
+      box-shadow: 0 20px 35px rgba(7, 59, 76, 0.15);
+      padding: 32px;
+      display: grid;
+      gap: 24px;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    }
+
+    header {
+      grid-column: 1 / -1;
+      text-align: center;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(2.4rem, 4vw, 3.4rem);
+      color: var(--primary);
+    }
+
+    header p {
+      margin-top: 8px;
+      font-size: 1.1rem;
+    }
+
+    .card {
+      background: var(--light);
+      border-radius: 20px;
+      padding: 24px;
+      box-shadow: inset 0 0 0 2px rgba(7, 59, 76, 0.08);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .card::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(120deg, rgba(255, 122, 89, 0.1), transparent 55%);
+      pointer-events: none;
+    }
+
+    .mode-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 16px;
+      margin-top: 16px;
+    }
+
+    .mode-button {
+      background: white;
+      border: 3px solid transparent;
+      border-radius: 16px;
+      padding: 16px;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s, border 0.2s;
+      text-align: left;
+    }
+
+    .mode-button:hover,
+    .mode-button.active {
+      transform: translateY(-4px);
+      border-color: var(--primary);
+      box-shadow: 0 12px 20px rgba(7, 59, 76, 0.15);
+    }
+
+    .mode-button h3 {
+      margin: 0 0 6px;
+      color: var(--dark);
+    }
+
+    .mode-button p {
+      margin: 0;
+      font-size: 0.95rem;
+      line-height: 1.4;
+    }
+
+    #start-game {
+      margin-top: 20px;
+      width: 100%;
+      padding: 14px 18px;
+      font-size: 1.1rem;
+      font-weight: 700;
+      border-radius: 16px;
+      border: none;
+      color: white;
+      background: var(--primary);
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    #start-game:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 12px 16px rgba(255, 122, 89, 0.3);
+    }
+
+    .leaderboard {
+      background: white;
+      border-radius: 16px;
+      border: 2px solid rgba(7, 59, 76, 0.08);
+      overflow: hidden;
+    }
+
+    .leaderboard h2 {
+      margin: 0;
+      padding: 16px 20px;
+      background: var(--dark);
+      color: white;
+      font-size: 1.4rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .leaderboard table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .leaderboard th,
+    .leaderboard td {
+      padding: 12px 14px;
+      text-align: center;
+    }
+
+    .leaderboard tbody tr:nth-child(odd) {
+      background: rgba(7, 59, 76, 0.04);
+    }
+
+    .leaderboard tbody tr:first-child td {
+      font-weight: 700;
+      color: var(--primary);
+    }
+
+    .game-area {
+      grid-column: 1 / -1;
+      background: #fffaf0;
+      border-radius: 24px;
+      padding: 28px;
+      display: none;
+      gap: 24px;
+    }
+
+    .game-area.active {
+      display: grid;
+    }
+
+    .game-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 16px;
+      font-weight: 600;
+    }
+
+    .status-group {
+      display: flex;
+      gap: 18px;
+      flex-wrap: wrap;
+    }
+
+    .status-chip {
+      background: white;
+      border-radius: 14px;
+      padding: 10px 14px;
+      box-shadow: 0 6px 12px rgba(7, 59, 76, 0.08);
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .question-card {
+      background: white;
+      border-radius: 24px;
+      padding: 32px;
+      text-align: center;
+      box-shadow: 0 12px 24px rgba(7, 59, 76, 0.1);
+    }
+
+    .question-card h2 {
+      margin: 0;
+      font-size: clamp(2rem, 6vw, 3.2rem);
+    }
+
+    .question-card input {
+      margin-top: 24px;
+      padding: 12px 16px;
+      font-size: 1.4rem;
+      border-radius: 12px;
+      border: 2px solid rgba(7, 59, 76, 0.2);
+      width: min(320px, 100%);
+      text-align: center;
+    }
+
+    .question-card button {
+      margin-top: 16px;
+      padding: 12px 16px;
+      font-size: 1.2rem;
+      border: none;
+      border-radius: 12px;
+      color: white;
+      background: var(--accent);
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
+
+    .question-card button:hover {
+      transform: translateY(-2px);
+    }
+
+    .progress {
+      margin-top: 12px;
+      height: 12px;
+      background: rgba(7, 59, 76, 0.12);
+      border-radius: 999px;
+      overflow: hidden;
+    }
+
+    .progress > div {
+      height: 100%;
+      width: 100%;
+      transform-origin: left;
+      background: linear-gradient(90deg, var(--primary), var(--secondary));
+    }
+
+    .feedback {
+      margin-top: 16px;
+      min-height: 24px;
+      font-weight: 600;
+      color: var(--dark);
+    }
+
+    .race-wrapper {
+      display: grid;
+      gap: 20px;
+    }
+
+    .race-track {
+      background: white;
+      border-radius: 20px;
+      padding: 20px;
+      box-shadow: inset 0 0 0 2px rgba(7, 59, 76, 0.08);
+      display: grid;
+      gap: 16px;
+    }
+
+    .lane {
+      position: relative;
+      background: rgba(7, 59, 76, 0.05);
+      border-radius: 999px;
+      height: 54px;
+      overflow: hidden;
+    }
+
+    .lane::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(90deg, rgba(255, 122, 89, 0.12) 0%, transparent 45%, rgba(6, 214, 160, 0.15) 100%);
+      pointer-events: none;
+    }
+
+    .runner {
+      position: absolute;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      transition: transform 0.4s ease, left 0.4s ease;
+      font-size: 1.8rem;
+      filter: drop-shadow(0 6px 10px rgba(7, 59, 76, 0.2));
+      white-space: nowrap;
+    }
+
+    .lane-label {
+      position: absolute;
+      left: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-weight: 700;
+      font-size: 0.95rem;
+      color: rgba(7, 59, 76, 0.65);
+      z-index: 2;
+    }
+
+    .distance-markers {
+      display: grid;
+      grid-template-columns: repeat(12, 1fr);
+      gap: 6px;
+      font-size: 0.75rem;
+      color: rgba(7, 59, 76, 0.6);
+      text-align: center;
+    }
+
+    .history {
+      margin-top: 20px;
+      max-height: 240px;
+      overflow-y: auto;
+      border-radius: 16px;
+      background: rgba(7, 59, 76, 0.05);
+      padding: 16px;
+    }
+
+    .history h3 {
+      margin-top: 0;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(6, 214, 160, 0.18);
+      color: #046d53;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 0.85rem;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    .preview-button {
+      margin-top: 16px;
+      width: 100%;
+      padding: 12px 16px;
+      background: white;
+      border: 2px dashed rgba(7, 59, 76, 0.18);
+      border-radius: 16px;
+      cursor: pointer;
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--primary);
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .preview-button:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 10px 18px rgba(255, 122, 89, 0.18);
+    }
+
+    dialog::backdrop {
+      background: rgba(7, 59, 76, 0.45);
+    }
+
+    #preview-dialog {
+      max-width: min(540px, 90vw);
+      border: none;
+      border-radius: 20px;
+      padding: 24px;
+      box-shadow: 0 24px 40px rgba(7, 59, 76, 0.25);
+    }
+
+    #preview-dialog h2 {
+      margin-top: 0;
+      color: var(--primary);
+    }
+
+    #preview-dialog button {
+      margin-top: 12px;
+      width: 100%;
+      padding: 12px 16px;
+      border-radius: 14px;
+      border: none;
+      background: var(--primary);
+      color: white;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    #preview-dialog ul {
+      padding-left: 20px;
+      line-height: 1.6;
+    }
+
+    @media (max-width: 768px) {
+      body {
+        padding: 16px;
+      }
+
+      .app {
+        padding: 20px;
+      }
+
+      .game-header {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <h1>곱셈 챔피언 리그</h1>
+      <p>60초 동안 최대한 많은 문제를 풀고, 전국 친구들과 점수를 겨뤄보세요!</p>
+    </header>
+
+    <section class="card" id="mode-card">
+      <h2>도전할 난이도를 선택하세요</h2>
+      <div class="mode-grid">
+        <button class="mode-button active" data-mode="twoByTwo">
+          <h3>챔피언 모드</h3>
+          <p>두 자리 수 × 두 자리 수<br />
+            차근차근 정확하게 풀어봐요!</p>
+          <span class="badge">+10점 / 정답</span>
+        </button>
+        <button class="mode-button" data-mode="threeByOne">
+          <h3>스피드 모드</h3>
+          <p>세 자리 수 × 한 자리 수<br />
+            빠른 암산으로 기록을 세워봐요!</p>
+          <span class="badge">+12점 / 정답</span>
+        </button>
+      </div>
+      <button id="start-game">게임 시작!</button>
+      <button class="preview-button" id="preview-button">🎮 미리 보기</button>
+    </section>
+
+    <section class="card leaderboard" id="leaderboard-card">
+      <h2>오늘의 랭킹 <span id="today-date"></span></h2>
+      <table>
+        <thead>
+          <tr>
+            <th>순위</th>
+            <th>이름</th>
+            <th>점수</th>
+            <th>정답</th>
+            <th>난이도</th>
+            <th>기록</th>
+          </tr>
+        </thead>
+        <tbody id="leaderboard-body">
+        </tbody>
+      </table>
+    </section>
+
+    <section class="game-area" id="game-area">
+      <div class="game-header">
+        <div class="status-group">
+          <span class="status-chip">⏱️ 남은 시간: <strong id="time-remaining">60</strong>초</span>
+          <span class="status-chip">🏆 현재 점수: <strong id="current-score">0</strong></span>
+          <span class="status-chip">✅ 정답 개수: <strong id="correct-count">0</strong></span>
+        </div>
+        <div class="status-group">
+          <span class="status-chip">🔥 콤보: <strong id="combo-count">0</strong></span>
+          <span class="status-chip">📍 스테이지: <strong id="stage-count">1</strong></span>
+        </div>
+      </div>
+      <div class="progress">
+        <div id="time-bar"></div>
+      </div>
+      <div class="race-wrapper">
+        <div class="race-track">
+          <div class="lane">
+            <span class="lane-label">나</span>
+            <span class="runner" id="player-runner">🦸‍♀️</span>
+          </div>
+          <div class="lane">
+            <span class="lane-label">라이벌</span>
+            <span class="runner" id="rival-runner">🤖</span>
+          </div>
+          <div class="distance-markers">
+            <span>출발</span>
+            <span>1</span>
+            <span>2</span>
+            <span>3</span>
+            <span>4</span>
+            <span>5</span>
+            <span>6</span>
+            <span>7</span>
+            <span>8</span>
+            <span>9</span>
+            <span>10</span>
+            <span>결승</span>
+          </div>
+        </div>
+      </div>
+      <div class="question-card">
+        <h2 id="question">3 × 7 = ?</h2>
+        <input type="number" id="answer" placeholder="정답을 입력하고 엔터!" autocomplete="off" />
+        <button id="submit-answer">정답 제출</button>
+        <div class="feedback" id="feedback"></div>
+      </div>
+      <div class="history" id="history">
+        <h3>문제 기록</h3>
+        <ol id="history-list"></ol>
+      </div>
+    </section>
+  </div>
+
+  <dialog id="result-dialog">
+    <form method="dialog" id="result-form">
+      <h2>✨ 대단해요! 기록을 남겨볼까요?</h2>
+      <p id="result-summary"></p>
+      <label>
+        이름을 입력하세요<br />
+        <input type="text" id="player-name" maxlength="12" placeholder="예: 수학왕 민수" required />
+      </label>
+      <menu>
+        <button value="cancel">닫기</button>
+        <button id="save-record" value="default">기록 저장</button>
+      </menu>
+    </form>
+  </dialog>
+
+  <dialog id="preview-dialog">
+    <h2>게임 미리 보기</h2>
+    <p>문제를 맞힐 때마다 영웅이 앞으로 전진하고, 틀리면 라이벌이 따라잡아요! 60초 안에 많이 맞힐수록 높은 점수와 랭킹을 얻을 수 있어요.</p>
+    <ul>
+      <li>두 자리 × 두 자리 또는 세 자리 × 한 자리 곱셈 문제가 나와요.</li>
+      <li>연속 정답을 맞히면 콤보가 올라가며 더 멀리 이동해요.</li>
+      <li>한 스테이지를 완주하면 보너스 점수와 시간이 추가돼요.</li>
+    </ul>
+    <button id="close-preview">시작하러 가기</button>
+  </dialog>
+
+  <template id="history-item-template">
+    <li><span class="expression"></span> → <strong class="result"></strong></li>
+  </template>
+
+  <script>
+    const modeButtons = document.querySelectorAll('.mode-button');
+    const startButton = document.getElementById('start-game');
+    const gameArea = document.getElementById('game-area');
+    const questionElement = document.getElementById('question');
+    const answerInput = document.getElementById('answer');
+    const feedbackElement = document.getElementById('feedback');
+    const historyList = document.getElementById('history-list');
+    const timeRemainingElement = document.getElementById('time-remaining');
+    const scoreElement = document.getElementById('current-score');
+    const correctCountElement = document.getElementById('correct-count');
+    const timeBar = document.getElementById('time-bar');
+    const leaderboardBody = document.getElementById('leaderboard-body');
+    const todayDateElement = document.getElementById('today-date');
+    const resultDialog = document.getElementById('result-dialog');
+    const resultSummary = document.getElementById('result-summary');
+    const playerNameInput = document.getElementById('player-name');
+    const comboElement = document.getElementById('combo-count');
+    const stageElement = document.getElementById('stage-count');
+    const playerRunner = document.getElementById('player-runner');
+    const rivalRunner = document.getElementById('rival-runner');
+    const previewButton = document.getElementById('preview-button');
+    const previewDialog = document.getElementById('preview-dialog');
+    const closePreviewButton = document.getElementById('close-preview');
+
+    const SCORE_STORAGE_KEY = 'multiplicationMastersScores';
+    const TRACK_GOAL = 10;
+
+    let currentMode = 'twoByTwo';
+    let score = 0;
+    let correctCount = 0;
+    let timeLeft = 60;
+    let timer = null;
+    let currentQuestion = null;
+    const questionHistory = [];
+    let combo = 0;
+    let stage = 1;
+    let playerPosition = 0;
+    let rivalPosition = 0;
+
+    function init() {
+      modeButtons.forEach((button) => {
+        button.addEventListener('click', () => {
+          modeButtons.forEach((btn) => btn.classList.remove('active'));
+          button.classList.add('active');
+          currentMode = button.dataset.mode;
+        });
+      });
+
+      startButton.addEventListener('click', startGame);
+      document.getElementById('submit-answer').addEventListener('click', submitAnswer);
+      answerInput.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter') {
+          event.preventDefault();
+          submitAnswer();
+        }
+      });
+
+      document.getElementById('result-form').addEventListener('submit', (event) => {
+        event.preventDefault();
+      });
+
+      document.getElementById('save-record').addEventListener('click', saveRecord);
+
+      previewButton.addEventListener('click', () => {
+        if (typeof previewDialog.showModal === 'function') {
+          previewDialog.showModal();
+        } else {
+          alert('미리 보기 기능을 지원하지 않는 브라우저예요. 게임을 바로 시작해보세요!');
+        }
+      });
+
+      closePreviewButton.addEventListener('click', () => {
+        previewDialog.close();
+      });
+
+      previewDialog.addEventListener('click', (event) => {
+        const dialogDimensions = previewDialog.getBoundingClientRect();
+        if (
+          event.clientX < dialogDimensions.left ||
+          event.clientX > dialogDimensions.right ||
+          event.clientY < dialogDimensions.top ||
+          event.clientY > dialogDimensions.bottom
+        ) {
+          previewDialog.close();
+        }
+      });
+
+      todayDateElement.textContent = new Date().toLocaleDateString('ko-KR', {
+        month: 'long',
+        day: 'numeric',
+        weekday: 'short',
+      });
+
+      loadLeaderboard();
+      updateTimeBar();
+      generateQuestion();
+      updateRaceStatus();
+    }
+
+    function startGame() {
+      score = 0;
+      correctCount = 0;
+      timeLeft = 60;
+      questionHistory.length = 0;
+      historyList.innerHTML = '';
+      scoreElement.textContent = '0';
+      correctCountElement.textContent = '0';
+      timeRemainingElement.textContent = timeLeft;
+      feedbackElement.textContent = '';
+      combo = 0;
+      stage = 1;
+      playerPosition = 0;
+      rivalPosition = 0;
+      comboElement.textContent = combo;
+      stageElement.textContent = stage;
+      updateTimeBar();
+      generateQuestion();
+      updateRaceStatus();
+      gameArea.classList.add('active');
+      answerInput.focus();
+
+      clearInterval(timer);
+      timer = setInterval(() => {
+        timeLeft -= 1;
+        timeRemainingElement.textContent = timeLeft;
+        updateTimeBar();
+
+        if (timeLeft <= 0) {
+          clearInterval(timer);
+          endGame();
+        }
+      }, 1000);
+    }
+
+    function generateQuestion() {
+      let a = 0;
+      let b = 0;
+      let display = '';
+
+      if (currentMode === 'twoByTwo') {
+        a = getRandomInt(10, 99);
+        b = getRandomInt(10, 99);
+        display = `${a} × ${b}`;
+      } else {
+        a = getRandomInt(100, 999);
+        b = getRandomInt(2, 9);
+        display = `${a} × ${b}`;
+      }
+
+      currentQuestion = {
+        a,
+        b,
+        answer: a * b,
+        display,
+      };
+
+      questionElement.textContent = `${display} = ?`;
+      answerInput.value = '';
+      answerInput.focus();
+    }
+
+    function submitAnswer() {
+      if (!currentQuestion || timeLeft <= 0) return;
+
+      const playerAnswer = Number(answerInput.value.trim());
+      if (Number.isNaN(playerAnswer)) {
+        feedbackElement.textContent = '숫자로만 답을 써주세요!';
+        return;
+      }
+
+      const isCorrect = playerAnswer === currentQuestion.answer;
+      const point = currentMode === 'twoByTwo' ? 10 : 12;
+      let distanceMessage = '';
+
+      const historyItem = {
+        question: currentQuestion.display,
+        playerAnswer,
+        correctAnswer: currentQuestion.answer,
+        isCorrect,
+      };
+
+      questionHistory.unshift(historyItem);
+      renderHistory();
+
+      if (isCorrect) {
+        score += point;
+        correctCount += 1;
+        combo += 1;
+        const extraSteps = combo > 0 && combo % 3 === 0 ? 2 : 1;
+        playerPosition = Math.min(playerPosition + extraSteps, TRACK_GOAL);
+        distanceMessage = extraSteps === 2 ? '콤보 보너스로 두 칸 전진!' : '한 칸 전진!';
+        feedbackElement.textContent = `멋져요! +${point}점, ${distanceMessage}`;
+        feedbackElement.style.color = '#046d53';
+      } else {
+        combo = 0;
+        rivalPosition = Math.min(rivalPosition + 1, TRACK_GOAL);
+        feedbackElement.textContent = `아쉬워요! 정답은 ${currentQuestion.answer} — 라이벌이 한 칸 다가왔어요.`;
+        feedbackElement.style.color = '#c1121f';
+      }
+
+      scoreElement.textContent = score;
+      correctCountElement.textContent = correctCount;
+      comboElement.textContent = combo;
+      updateRaceStatus();
+
+      checkStageProgress();
+
+      generateQuestion();
+    }
+
+    function renderHistory() {
+      historyList.innerHTML = '';
+      const template = document.getElementById('history-item-template');
+      questionHistory.slice(0, 8).forEach((item) => {
+        const node = template.content.cloneNode(true);
+        node.querySelector('.expression').textContent = item.question;
+        const resultText = item.isCorrect
+          ? `${item.playerAnswer} ✅`
+          : `${item.playerAnswer} ❌ (정답 ${item.correctAnswer})`;
+        node.querySelector('.result').textContent = resultText;
+        historyList.appendChild(node);
+      });
+    }
+
+    function endGame() {
+      feedbackElement.textContent = '시간 종료! 이름을 적고 기록을 남겨봐요!';
+      feedbackElement.style.color = '#073b4c';
+      resultSummary.textContent = `이번 게임에서 ${correctCount}문제를 맞혀 ${score}점을 얻었어요.`;
+      playerNameInput.value = '';
+
+      if (typeof resultDialog.showModal === 'function') {
+        resultDialog.showModal();
+      } else {
+        alert('브라우저가 기록 저장을 지원하지 않아요. 다른 브라우저를 사용해보세요.');
+      }
+    }
+
+    function checkStageProgress() {
+      if (playerPosition >= TRACK_GOAL) {
+        score += 15;
+        timeLeft = Math.min(timeLeft + 8, 90);
+        stage += 1;
+        playerPosition = 0;
+        rivalPosition = 0;
+        combo = 0;
+        scoreElement.textContent = score;
+        timeRemainingElement.textContent = timeLeft;
+        comboElement.textContent = combo;
+        stageElement.textContent = stage;
+        feedbackElement.textContent = `🎉 스테이지 ${stage - 1} 완주! 보너스 15점과 8초 추가!`;
+        feedbackElement.style.color = '#8b5cf6';
+        updateRaceStatus();
+        updateTimeBar();
+      } else if (rivalPosition >= TRACK_GOAL) {
+        rivalPosition = 0;
+        playerPosition = Math.max(playerPosition - 1, 0);
+        combo = 0;
+        feedbackElement.textContent = '라이벌이 먼저 결승에 도착! 한 칸 뒤로 갔지만 다시 도전해봐요!';
+        feedbackElement.style.color = '#ef233c';
+        comboElement.textContent = combo;
+        updateRaceStatus();
+      }
+    }
+
+    function updateRaceStatus() {
+      const playerProgress = Math.min(playerPosition / TRACK_GOAL, 1);
+      const rivalProgress = Math.min(rivalPosition / TRACK_GOAL, 1);
+      const startOffset = 8;
+      const endOffset = 96;
+      const playerLeft = startOffset + playerProgress * (endOffset - startOffset);
+      const rivalLeft = startOffset + rivalProgress * (endOffset - startOffset);
+      playerRunner.style.left = `${playerLeft}%`;
+      rivalRunner.style.left = `${rivalLeft}%`;
+      playerRunner.style.transform = 'translate(-50%, -50%)';
+      rivalRunner.style.transform = 'translate(-50%, -50%)';
+    }
+
+    function saveRecord(event) {
+      event.preventDefault();
+      const name = playerNameInput.value.trim();
+      if (!name) {
+        alert('이름을 입력해주세요!');
+        return;
+      }
+
+      const record = {
+        id: crypto.randomUUID(),
+        name,
+        score,
+        correctCount,
+        mode: currentMode === 'twoByTwo' ? '챔피언' : '스피드',
+        timestamp: Date.now(),
+      };
+
+      const stored = JSON.parse(localStorage.getItem(SCORE_STORAGE_KEY) || '[]');
+      stored.push(record);
+      localStorage.setItem(SCORE_STORAGE_KEY, JSON.stringify(stored));
+
+      resultDialog.close();
+      loadLeaderboard();
+      showCelebration();
+    }
+
+    function loadLeaderboard() {
+      const stored = JSON.parse(localStorage.getItem(SCORE_STORAGE_KEY) || '[]');
+      stored.sort((a, b) => {
+        if (b.score === a.score) {
+          return b.correctCount - a.correctCount;
+        }
+        return b.score - a.score;
+      });
+
+      leaderboardBody.innerHTML = '';
+
+      if (stored.length === 0) {
+        const emptyRow = document.createElement('tr');
+        const td = document.createElement('td');
+        td.colSpan = 6;
+        td.textContent = '아직 기록이 없어요. 첫 번째 챔피언이 되어보세요!';
+        emptyRow.appendChild(td);
+        leaderboardBody.appendChild(emptyRow);
+        return;
+      }
+
+      stored.slice(0, 10).forEach((entry, index) => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td>${index + 1}</td>
+          <td>${entry.name}</td>
+          <td>${entry.score}</td>
+          <td>${entry.correctCount}</td>
+          <td>${entry.mode}</td>
+          <td>${new Date(entry.timestamp).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })}</td>
+        `;
+        leaderboardBody.appendChild(row);
+      });
+    }
+
+    function updateTimeBar() {
+      const progress = Math.min(Math.max(timeLeft / 60, 0), 1);
+      timeBar.style.transform = `scaleX(${progress})`;
+    }
+
+    function getRandomInt(min, max) {
+      return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
+
+    function showCelebration() {
+      const confetti = document.createElement('div');
+      confetti.textContent = '🎉 기록이 저장되었어요!';
+      confetti.style.position = 'fixed';
+      confetti.style.top = '20px';
+      confetti.style.left = '50%';
+      confetti.style.transform = 'translateX(-50%)';
+      confetti.style.background = 'var(--accent)';
+      confetti.style.color = 'white';
+      confetti.style.padding = '12px 20px';
+      confetti.style.borderRadius = '999px';
+      confetti.style.boxShadow = '0 12px 20px rgba(6, 214, 160, 0.3)';
+      confetti.style.zIndex = '9999';
+      document.body.appendChild(confetti);
+
+      setTimeout(() => {
+        confetti.remove();
+      }, 1800);
+    }
+
+    window.addEventListener('load', init);
+  </script>
+</body>
+</html>
